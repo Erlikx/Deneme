@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBAN'larım</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #1d1d1f;
+            --text-muted: #6e6e73;
+            --primary: #0071e3;
+            --primary-hover: #0077ed;
+            --success: #34c759;
+            --border: #d2d2d7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 24px 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .bank-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bank-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .bank-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .account-name {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .swift-badge {
+            background-color: #f5f5f7;
+            color: var(--text-muted);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            font-family: monospace;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .swift-badge:hover {
+            background-color: #e8e8ed;
+            color: var(--text-main);
+        }
+
+        .iban-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .iban-text {
+            background: var(--bg-color);
+            padding: 14px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 1.05rem;
+            letter-spacing: 0.5px;
+            word-break: break-all;
+            text-align: center;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .copy-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .copy-btn:active {
+            transform: scale(0.98);
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--text-main);
+            color: #fff;
+            text-align: center;
+            border-radius: 20px;
+            padding: 12px 20px;
+            position: fixed;
+            z-index: 10;
+            left: 50%;
+            bottom: 40px;
+            transform: translateX(-50%) translateY(20px);
+            font-size: 0.95rem;
+            font-weight: 500;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s, visibility 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Banka Bilgilerim</h1>
+        
+        <div id="bank-list"></div>
+    </div>
+
+    <div id="toast">Kopyalandı!</div>
+
+    <script>
+        const bankalar = [
+            { id: "enpara", ad: "Enpara / QNB", hesapAdi: "Fırat", swift: "FINBTRA2XXX", iban: "TR12 3456 7890 1234 5678 9012 34", renk: "#8e24aa", harf: "E" },
+            { id: "ziraat", ad: "Ziraat Bankası", hesapAdi: "Fırat", swift: "TCZBTRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#e10514", harf: "Z" },
+            { id: "isbankasi", ad: "Türkiye İş Bankası", hesapAdi: "Fırat", swift: "ISBKTRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#0055A6", harf: "İ" },
+            { id: "garanti", ad: "Garanti BBVA", hesapAdi: "Fırat", swift: "TGBATRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#009966", harf: "G" },
+            { id: "akbank", ad: "Akbank", hesapAdi: "Fırat", swift: "AKBKTRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#ed1c24", harf: "A" },
+            { id: "yapikredi", ad: "Yapı Kredi", hesapAdi: "Fırat", swift: "YKBKTRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#004b87", harf: "Y" },
+            { id: "vakifbank", ad: "VakıfBank", hesapAdi: "Fırat", swift: "TVBATRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#ffb600", harf: "V" },
+            { id: "halkbank", ad: "Halkbank", hesapAdi: "Fırat", swift: "PHBKTRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#00519e", harf: "H" },
+            { id: "denizbank", ad: "DenizBank", hesapAdi: "Fırat", swift: "DENZTRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#1b439b", harf: "D" },
+            { id: "teb", ad: "TEB", hesapAdi: "Fırat", swift: "TEBKTRA2XXX", iban: "TR00 0000 0000 0000 0000 0000 00", renk: "#006633", harf: "T" }
+        ];
+
+        const bankListContainer = document.getElementById("bank-list");
+
+        bankalar.forEach(banka => {
+            const cardHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="bank-brand">
+                            <div class="bank-icon" style="background-color: ${banka.renk}; ${banka.harf === 'V' ? 'color: black;' : ''}">
+                                ${banka.harf}
+                            </div>
+                            <div>
+                                <div class="bank-name">${banka.ad}</div>
+                                <div class="account-name">${banka.hesapAdi}</div>
+                            </div>
+                        </div>
+                        <div class="swift-badge" onclick="kopyala('${banka.swift}', 'SWIFT Kodu')">
+                            SWIFT: ${banka.swift} 
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="iban-container">
+                        <div class="iban-text" id="iban-${banka.id}">${banka.iban}</div>
+                        <button class="copy-btn" onclick="kopyala('${banka.iban}', 'IBAN')">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            IBAN Kopyala
+                        </button>
+                    </div>
+                </div>
+            `;
+            bankListContainer.innerHTML += cardHTML;
+        });
+
+        function kopyala(metin, tur) {
+            navigator.clipboard.writeText(metin).then(() => {
+                showToast(`${tur} kopyalandı!`);
+            }).catch(err => {
+                console.error('Kopyalama başarısız: ', err);
+                alert("Kopyalama başarısız oldu.");
+            });
+        }
+
+        let toastTimeout;
+        function showToast(mesaj) {
+            const toast = document.getElementById("toast");
+            toast.innerText = mesaj;
+            toast.className = "show";
+            
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(function(){ 
+                toast.className = toast.className.replace("show", ""); 
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
